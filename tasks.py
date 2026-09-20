@@ -1,7 +1,9 @@
 from robocorp.tasks import task
-from robocorp import browser, vault
+from robocorp import browser
+
 from RPA.HTTP import HTTP
 from RPA.Tables import Tables
+from RPA.PDF import PDF
 
 
 @task
@@ -27,6 +29,13 @@ def order_robots_from_RobotSpareBin():
 
         # tarkistetaan ja lähetetään tilaus
         preview_and_submit_order()
+
+        receipt_pdf = store_receipt_as_pdf(order['Order number'])
+        receipt_screenshot = screenshot_robot(order['Order number'])
+        embed_screenshot_to_receipt(receipt_screenshot, receipt_pdf)
+
+        page = browser.page()
+        page.click('#order-another')
 
 
 #######################################################################################        
@@ -64,7 +73,6 @@ def preview_and_submit_order():
     page = browser.page()
 
     page.click('#preview') # näytä robotin preview
-    page.locator('#robot-preview').screenshot(path='output/robot_preview.png') # kuvakaappaus robotista
     page.click('#order') # lähetä tilaus
 
     page.wait_for_timeout(2000) # odota ennen error tarkistusta
@@ -72,7 +80,39 @@ def preview_and_submit_order():
     # tarkistetaan tuleeko erroreita. Käytetään whileä siltä varatlta että erroreita tulisi peräkkäin
     while page.locator(".alert.alert-danger").is_visible(): # loopataan niin kauan kun alert on näkyvissä
         page.click("#order")
-        page.wait_for_timeout(2000)
+        page.wait_for_timeout(2000) 
 
-    page.click('#order-another') 
+def store_receipt_as_pdf(order_number):
+    pdf = PDF()
+    pdf_file = f'output/receipts/Order-{order_number}_receipts.pdf'
 
+    html = f"""
+    <html>
+        <body>
+            <h1>Order receipt</h1>
+            <p>Order number: {order_number}</p>
+        </body>
+    </html>
+    """
+
+    pdf.html_to_pdf(
+        html,
+        pdf_file
+    )
+
+    return pdf_file
+
+def screenshot_robot(order_number):
+    page = browser.page()
+    screenshot = f'output/receipts/receipt_order-{order_number}.png'
+    page.locator('#receipt').screenshot(path=screenshot) # kuvakaappaus robotista
+    return screenshot
+
+def embed_screenshot_to_receipt(screenshot, pdf_file):
+    pdf = PDF()
+
+    pdf.add_files_to_pdf(
+        files=[screenshot],
+        target_document=pdf_file,
+        append=True
+    )

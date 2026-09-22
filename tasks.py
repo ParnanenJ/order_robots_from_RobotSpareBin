@@ -4,6 +4,7 @@ from robocorp import browser
 from RPA.HTTP import HTTP
 from RPA.Tables import Tables
 from RPA.PDF import PDF
+from RPA.Archive import Archive
 
 
 @task
@@ -36,6 +37,8 @@ def order_robots_from_RobotSpareBin():
 
         page = browser.page()
         page.click('#order-another')
+
+    archive_receipts()
 
 
 #######################################################################################        
@@ -104,7 +107,7 @@ def store_receipt_as_pdf(order_number):
 
 def screenshot_robot(order_number):
     page = browser.page()
-    screenshot = f'output/receipts/receipt_order-{order_number}.png'
+    screenshot = f'output/receipts_png/receipt_order-{order_number}.png'
     page.locator('#receipt').screenshot(path=screenshot) # kuvakaappaus robotista
     return screenshot
 
@@ -116,3 +119,7 @@ def embed_screenshot_to_receipt(screenshot, pdf_file):
         target_document=pdf_file,
         append=True
     )
+
+def archive_receipts():
+    lib = Archive()
+    lib.archive_folder_with_zip('./output/receipts', './output/receipt_PDFs.zip')

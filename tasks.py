@@ -35,8 +35,7 @@ def order_robots_from_RobotSpareBin():
         receipt_screenshot = screenshot_robot(order['Order number'])
         embed_screenshot_to_receipt(receipt_screenshot, receipt_pdf)
 
-        page = browser.page()
-        page.click('#order-another')
+        next_order()
 
     archive_receipts()
 
@@ -119,6 +118,10 @@ def embed_screenshot_to_receipt(screenshot, pdf_file):
         target_document=pdf_file,
         append=True
     )
+
+def next_order():
+    page = browser.page()
+    page.click('#order-another')
 
 def archive_receipts():
     lib = Archive()
